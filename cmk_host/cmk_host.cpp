@@ -9,27 +9,25 @@
 #include <filesystem>
 #include <string_view>
 
-using CommandFunc = int(__stdcall *)(const char *text, uint32_t);
+using CommandFunc = int(__stdcall *)(const char *text, uint32_t len);
 
 int main() {
-    // Load
     constexpr std::string_view x =
         R"(C:\Users\sk\git\cmk_api\target\debug\cmk_api.dll)";
-    HINSTANCE dll = ::LoadLibrary(x.data());
+    auto *dll = reinterpret_cast<HINSTANCE>(::LoadLibraryA(x.data()));
 
     if (dll == nullptr) {
         std::cout << "could not load the dynamic library" << std::endl;
         return 1;
     }
 
-    // resolve function address here
     auto command =
         reinterpret_cast<CommandFunc>(::GetProcAddress(dll, "command"));
     if (command == nullptr) {
         std::cout << "could not locate the function" << std::endl;
         return 1;
     }
-    command("abcde", 5);
-    std::cout << "Hello CMake." << std::endl;
+    constexpr std::string_view cmd{"From C++"};
+    command(cmd.data(), static_cast<uint32_t>(cmd.size()));
     return 0;
 }
